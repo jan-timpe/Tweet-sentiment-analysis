@@ -5,29 +5,26 @@ Jan Timpe | jantimpe@uark.edu
 Collects tweets, uses machine learning to predict sentament
 Meant to be deployed with Apache Spark
 """
-
+import csv
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
 
-def readdata(xfile=None, yfile=None):
-    xdata = []
-    if xfile:
-        for x in open(xfile).readlines():
-            xdata.append(x.strip())
-    xdata = np.array(xdata)
+def readdata(filename):
+    file = open(filename)
+    reader = csv.reader(file)
 
+    xdata = []
     ydata = []
-    if yfile:
-        for y in open(yfile).readlines():
-            ydata.append(int(y.strip()))
-    ydata = np.array(ydata)
+    for row in reader:
+        xdata.append(row[3].strip())
+        ydata.append(int(row[1].strip()))
 
     return (xdata, ydata)
 
 
 # read the training data
-xdata, ydata = readdata(xfile='./data/x_train.csv', yfile='./data/y_train.csv')
+xdata, ydata = readdata('./data/train.csv')
 
 # create and fit vectorizer and transformer objects
 vect = CountVectorizer()
@@ -40,7 +37,7 @@ classifier = MultinomialNB()
 classifier.fit(freqs, ydata)
 
 # grab the test data
-xtest, ytest = readdata(xfile='./data/x_test.csv', yfile='./data/y_test.csv')
+xtest, ytest = readdata('./data/test.csv')
 res_counts = vect.transform(xtest)
 res_freqs = transf.transform(res_counts)
 

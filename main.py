@@ -5,15 +5,13 @@ Jan Timpe | jantimpe@uark.edu
 Collects tweets, uses machine learning to predict sentament
 Meant to be deployed with Apache Spark
 """
-import csv, classifier, db, time
+import csv, classifier, db, spark, time
 import numpy as np
 
 if __name__ == '__main__':
     # read the training data
-    clf = classifier.train()
-
-    # test the thing
-    classifier.test()
+    # clf = classifier.train()
+    # classifier.test()
 
     # start looping over tweets
     # for tweet in db.gettweets():
@@ -21,3 +19,6 @@ if __name__ == '__main__':
     #     prediction = clf.predict(classifier.transform(text))
     #     print(text, ' ^^ ', prediction)
     #     time.sleep(0.5)
+
+
+    clf = spark.train()

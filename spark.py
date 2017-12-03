@@ -1,31 +1,41 @@
 import classifier
+import numpy as np
 from pyspark import SparkContext
-from pyspark.mllib.classification import NaiveBayes, NaiveBayesModel
+from pyspark.mllib.classification import NaiveBayes, NaiveBayesModel, LabeledPoint
 from pyspark.mllib.util import MLUtils
 import shutil
 
-sc = SparkContext(appName="PythonNaiveBayesExample")
+def preprocess(sc, data, labels):
+    points = []
+    for i in range(len(data)):
+        wordarr = data[i]
+        label = labels[i]
+        point = LabeledPoint(label, wordarr)
+        points.append(point)
+    rdd = sc.parallelize(points)
+    return rdd
 
-# $example on$
-# Load and parse the data file.
-data = MLUtils.loadLibSVMFile(sc, "data/mllib/sample_libsvm_data.txt")
+def traintestsplit(data):
+    return data.randomSplit([0.6, 0.4])
 
-# Split data approximately into training (60%) and test (40%)
-training, test = data.randomSplit([0.6, 0.4])
+def context(appname):
+    sc = SparkContext(appName=appname)
+    return sc
 
-# Train a naive Bayes model.
-model = NaiveBayes.train(training, 1.0)
+def train(data):
+    model = NaiveBayes.train(data, 1.0)
+    return model
 
-# Make prediction and test accuracy.
-predictionAndLabel = test.map(lambda p: (model.predict(p.features), p.label))
-accuracy = 1.0 * predictionAndLabel.filter(lambda pl: pl[0] == pl[1]).count() / test.count()
-print('model accuracy {}'.format(accuracy))
+def test(model, data):
+    pred = data.map(lambda p: (model.predict(p.features), p.label))
+    acc = 1.0 * pred.filter(lambda pl: pl[0] == pl[1]).count() / data.count()
+    return acc, model
 
-# Save and load model
-output_dir = 'target/tmp/myNaiveBayesModel'
-shutil.rmtree(output_dir, ignore_errors=True)
-model.save(sc, output_dir)
-sameModel = NaiveBayesModel.load(sc, output_dir)
-predictionAndLabel = test.map(lambda p: (sameModel.predict(p.features), p.label))
-accuracy = 1.0 * predictionAndLabel.filter(lambda pl: pl[0] == pl[1]).count() / test.count()
-print('sameModel accuracy {}'.format(accuracy))
+def save(model, sc, filename):
+    shutil.rmtree(filename, ignore_errors=True)
+    model.save(sc, filename)
+    return sc, model
+
+def load(sc, filename):
+    model = NaiveBayesModel.load(sc, filename)
+    return sc, model

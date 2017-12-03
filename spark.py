@@ -4,9 +4,6 @@ from pyspark import SparkContext
 from pyspark.mllib.classification import NaiveBayes, NaiveBayesModel, LabeledPoint
 from pyspark.mllib.util import MLUtils
 import shutil
-def readsample(sc):
-    data = MLUtils.loadLibSVMFile(sc, "data/mllib/sample_libsvm_data.txt")
-    return data
 
 def preprocess(sc, data, labels):
     data = classifier.tolibsvm(data)
@@ -16,7 +13,7 @@ def preprocess(sc, data, labels):
         label = labels[i]
         point = LabeledPoint(label, wordarr)
         points.append(point)
-
+ 
     rdd = sc.parallelize(points)
     return rdd
 

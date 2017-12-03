@@ -4,10 +4,6 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.naive_bayes import MultinomialNB
 
-clf = MultinomialNB()
-vect = CountVectorizer()
-transf = TfidfTransformer()
-
 def readdata(filename):
     file = open(filename)
     reader = csv.reader(file)
@@ -20,39 +16,36 @@ def readdata(filename):
     file.close()
     return (xdata, ydata)
 
-def tolibsvm(data):
-    counts = vect.fit_transform(np.array(data))
-    freqs = transf.fit_transform(counts).toarray()
+def tolibsvm(data, countvect=CountVectorizer(), transformer=TfidfTransformer()):
+    counts = countvect.fit_transform(np.array(data))
+    freqs = transformer.fit_transform(counts).toarray()
     return freqs
 
-def fit_transform(data):
-    counts = vect.fit_transform(np.array(data))
-    freqs = transf.fit_transform(counts)
-    return freqs
+def fit_transform(data, countvect, transformer):
+    counts = countvect.fit_transform(np.array(data))
+    freqs = transformer.fit_transform(counts)
+    return countvect, transformer, freqs
 
-def train():
-    xdata, ydata = readdata('./data/train.csv')
-    freqs = fit_transform(xdata)
-    clf.fit(freqs, ydata)
-    return clf
+def transform(data, countvect, transformer):
+    counts = countvect.transform(np.array(data))
+    freqs = transformer.transform(counts)
+    return countvect, transformer, freqs
 
-def transform(str_array):
-    counts = vect.transform(np.array(str_array))
-    freqs = transf.transform(counts)
-    return freqs
+def train(data, labels):
+    model = MultinomialNB()
+    countvect = CountVectorizer()
+    transformer = TfidfTransformer()
 
-def test():
-    xtest, ytest = readdata('./data/test.csv')
-    predictions = clf.predict(transform(xtest))
-    y = 0
-    correct = 0
-    wrong = 0
-    for pred in predictions:
-        if pred == ytest[y]:
-            correct += 1
-        else:
-            wrong += 1
-        y += 1
+    countvect, transformer, freqs = fit_transform(data, countvect, transformer)
+    model.fit(freqs, labels)
+    return countvect, transformer, model
 
-    perc = int(correct/(wrong + correct) * 100)
-    print('Howd it go? Correct:', correct, '; Wrong:', wrong, '; Percent:', perc)
+def test(model, data, labels, countvect, transformer):
+    countvect, transformer, freqs = transform(data, countvect, transformer)
+    pred = model.predict(freqs)
+    preds = []
+    for i in range(len(pred)):
+        preds.append((pred[i], labels[i]))
+
+    acc = 1.0 * len([p for p in pred if pred[0] == pred[1]]) / len(data)
+    return acc, model

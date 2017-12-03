@@ -5,12 +5,14 @@ from pyspark.mllib.classification import NaiveBayes, NaiveBayesModel, LabeledPoi
 from pyspark.mllib.util import MLUtils
 import shutil
 
-def preprocess(sc, data, labels):
+def preprocess(sc, data, labels=None):
     data = classifier.tolibsvm(data)
     points = []
     for i in range(len(data)):
         wordarr = data[i]
-        label = labels[i]
+        label = 0
+        if labels:
+            label = labels[i]
         point = LabeledPoint(label, wordarr)
         points.append(point)
  
@@ -36,8 +38,13 @@ def test(model, data):
 def save(model, sc, filename):
     shutil.rmtree(filename, ignore_errors=True)
     model.save(sc, filename)
-    return sc, model
 
 def load(sc, filename):
     model = NaiveBayesModel.load(sc, filename)
     return sc, model
+
+def predict(sc, model, data):
+    data = preprocess(sc, data)
+    pred = data.map(lambda p: model.predict(p.features))
+
+    pred.show()

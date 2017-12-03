@@ -55,11 +55,33 @@ def predict(model, textarr, countvect, transformer):
     pred = model.predict(freqs)
     return pred
 
-def save(model, filename):
-    with open(filename, 'wb') as file:
+def save(path, model, countvect, transformer):
+    modelpath = str(path) + '/model.pkl'
+    with open(modelpath, 'wb') as file:
         pickle.dump(model, file)
 
-def load(filename):
-    with open(filename, 'rb') as file:
+    vectpath = str(path) + '/countvectorizer.pkl'
+    with open(vectpath, 'wb') as file:
+        pickle.dump(countvect, file)
+
+    transfpath = str(path) + '/tfidftransformer.pkl'
+    with open(transfpath, 'wb') as file:
+        pickle.dump(transformer, file)
+
+def load(path):
+    model = None
+    modelpath = str(path) + '/model.pkl'
+    with open(modelpath, 'rb') as file:
         model = pickle.load(file)
-    return model
+
+    countvect = None
+    vectpath = str(path) + '/countvectorizer.pkl'
+    with open(vectpath, 'rb') as file:
+        countvect = pickle.load(file)
+
+    transformer = None
+    transfpath = str(path) + '/tfidftransformer.pkl'
+    with open(transfpath, 'rb') as file:
+        transformer = pickle.load(file)
+
+    return countvect, transformer, model

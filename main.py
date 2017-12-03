@@ -10,6 +10,8 @@ import numpy as np
 
 TRAIN_FILENAME = './data/smtrain.csv'
 TEST_FILENAME = './data/smtest.csv'
+SKLEARN_PATH = './data/models/sklearn'
+SPARK_PATH = './data/models/spark'
 
 if __name__ == '__main__':
     # read the training data
@@ -21,7 +23,9 @@ if __name__ == '__main__':
     print('Sklearn acc: {}'.format(acc))
 
     print('Saving sklearn')
-    classifier.save(model, './data/models/sklearn.model')
+    classifier.save(SKLEARN_PATH, model, countvect, transformer)
+    countvect, transformer, model = classifier.load(SKLEARN_PATH)
+    print(classifier.predict(model, ['i like something'], countvect, transformer))
 
     # start looping over tweets
     # for tweet in db.gettweets():
@@ -30,9 +34,9 @@ if __name__ == '__main__':
     #     print(text, ' ^^ ', prediction)
     #     time.sleep(0.5) 
 
-    xdata, ydata = classifier.readdata(TRAIN_FILENAME)
     sc = spark.context('TwitterSentimentAnalysis')
-    proc = spark.preprocess(sc, xdata, ydata)
+    xdata, ydata = classifier.readdata(TRAIN_FILENAME)
+    proc = spark.preprocess(sc, xdata, labels=ydata)
 
     traindata, testdata = spark.traintestsplit(proc)
     model = spark.train(traindata)
@@ -40,4 +44,8 @@ if __name__ == '__main__':
     print('Spark acc: {}'.format(acc))
 
     print('Saving spark')
-    spark.save(model, sc, './data/models/spark.model')
+    spark.save(model, sc, SPARK_PATH)
+
+    sc, model = spark.load(sc, SPARK_PATH)
+    xdata = ['boobs are good', 'beer is bad']
+    print('Prediction:', spark.predict(sc, model, xdata))

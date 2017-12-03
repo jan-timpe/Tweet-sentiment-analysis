@@ -8,13 +8,6 @@ clf = MultinomialNB()
 vect = CountVectorizer()
 transf = TfidfTransformer()
 
-def tolibsvm(data):
-    print(data)
-    tweetdata = []
-    for line in data:
-        tweetdata.append(fit_transform_arr(line))
-    return tweetdata
-
 def readdata(filename):
     file = open(filename)
     reader = csv.reader(file)
@@ -27,7 +20,7 @@ def readdata(filename):
     file.close()
     return (xdata, ydata)
 
-def fit_transform_arr(data):
+def tolibsvm(data):
     counts = vect.fit_transform(np.array(data))
     freqs = transf.fit_transform(counts).toarray()
     return freqs

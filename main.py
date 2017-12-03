@@ -21,12 +21,11 @@ if __name__ == '__main__':
     #     time.sleep(0.5)
 
     xdata, ydata = classifier.readdata('./data/smtrain.csv')
-    data = classifier.tolibsvm(xdata)
-
     sc = spark.context('TwitterSentimentAnalysis')
-    proc = spark.preprocess(sc, data, ydata)
-    traindata, testdata = spark.traintestsplit(proc)
+    samp = spark.readsample(sc)
+    proc = spark.preprocess(sc, xdata, ydata)
 
+    traindata, testdata = spark.traintestsplit(proc)
     model = spark.train(traindata)
     acc, model = spark.test(model, testdata)
     print('Acc: {}'.format(acc))

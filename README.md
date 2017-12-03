@@ -29,7 +29,7 @@ Two classifiers are running here, sklearn and Apache Spark examples of the Multi
 
 The best way to see what's happening behind-the-scenes is to look at the sklearn implementation in `classifier.py`, following the `main.py` entrypoint.
 
-# sklearn
+### sklearn
 
 In `main.py`, `readdata()` is called twice, producing two raw datasets, having undergone no preprocessing. In effect, this is the tweet text and the 'sentiment rating' (1 for positive sentiment, 0 for negative) for each. Next, the classifier is trained with the call to `classifier.train()`. 
 

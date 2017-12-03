@@ -47,5 +47,10 @@ def test(model, data, labels, countvect, transformer):
     for i in range(len(pred)):
         preds.append((pred[i], labels[i]))
 
-    acc = 1.0 * len([p for p in pred if pred[0] == pred[1]]) / len(data)
+    acc = 1.0 * len([p for p in preds if p[0] == p[1]]) / len(data)
     return acc, model
+
+def predict(model, textarr, countvect, transformer):
+    countvect, transformer, freqs = transform(textarr, countvect, transformer)
+    pred = model.predict(freqs)
+    return pred

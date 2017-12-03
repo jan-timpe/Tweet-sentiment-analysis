@@ -8,8 +8,8 @@ Meant to be deployed with Apache Spark
 import csv, classifier, db, spark, time, write
 import numpy as np
 
-TRAIN_FILENAME = './data/train.csv'
-TEST_FILENAME = './data/test.csv'
+TRAIN_FILENAME = './data/smtrain.csv'
+TEST_FILENAME = './data/smtest.csv'
 
 if __name__ == '__main__':
     # read the training data
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     #     print(text, ' ^^ ', prediction)
     #     time.sleep(0.5) 
 
-    xdata, ydata = classifier.readdata('./data/smtrain.csv')
+    xdata, ydata = classifier.readdata(TRAIN_FILENAME)
     sc = spark.context('TwitterSentimentAnalysis')
     proc = spark.preprocess(sc, xdata, ydata)
 

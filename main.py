@@ -20,6 +20,9 @@ if __name__ == '__main__':
 
     print('Sklearn acc: {}'.format(acc))
 
+    print('Saving sklearn')
+    classifier.save(model, './data/models/sklearn.model')
+
     # start looping over tweets
     # for tweet in db.gettweets():
     #     text = [tweet['text']]
@@ -35,3 +38,6 @@ if __name__ == '__main__':
     model = spark.train(traindata)
     acc, model = spark.test(model, testdata)
     print('Spark acc: {}'.format(acc))
+
+    print('Saving spark')
+    spark.save(model, sc, './data/models/spark.model')

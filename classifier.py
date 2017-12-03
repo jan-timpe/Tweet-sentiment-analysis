@@ -1,4 +1,4 @@
-import csv
+import csv, pickle
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.feature_extraction import DictVectorizer
@@ -54,3 +54,12 @@ def predict(model, textarr, countvect, transformer):
     countvect, transformer, freqs = transform(textarr, countvect, transformer)
     pred = model.predict(freqs)
     return pred
+
+def save(model, filename):
+    with open(filename, 'wb') as file:
+        pickle.dump(model, file)
+
+def load(filename):
+    with open(filename, 'rb') as file:
+        model = pickle.load(file)
+    return model

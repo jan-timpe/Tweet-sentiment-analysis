@@ -1,5 +1,8 @@
 import csv, pickle
+from nltk import word_tokenize
+from nltk.corpus import stopwords
 import numpy as np
+import re
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.naive_bayes import MultinomialNB
@@ -16,17 +19,32 @@ def readdata(filename):
     file.close()
     return (xdata, ydata)
 
-def tolibsvm(data, countvect=CountVectorizer(), transformer=TfidfTransformer()):
-    counts = countvect.fit_transform(np.array(data))
-    freqs = transformer.fit_transform(counts).toarray()
-    return freqs
+def preprocess_text(data):
+    proc = []
+    for d in data:
+        # yeah this is real sexy
+        # gets rid of all urls
+        # how does it work? god only knows...
+        d = re.sub(r'''(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))''', '', d)
+        
+        words = word_tokenize(d)
+        filtered_words = [w for w in words if w not in stopwords.words('english')]
+        proc.append(' '.join(filtered_words))
+    
+    return proc
 
-def fit_transform(data, countvect, transformer):
+def tolibsvm(data, countvect=CountVectorizer(), transformer=TfidfTransformer(), array=False):
+    data = preprocess_text(data)
     counts = countvect.fit_transform(np.array(data))
     freqs = transformer.fit_transform(counts)
+
+    if array:
+        return countvect, transformer, freqs.toarray()
+
     return countvect, transformer, freqs
 
 def transform(data, countvect, transformer):
+    data = preprocess_text(data)
     counts = countvect.transform(np.array(data))
     freqs = transformer.transform(counts)
     return countvect, transformer, freqs
@@ -36,7 +54,7 @@ def train(data, labels):
     countvect = CountVectorizer()
     transformer = TfidfTransformer()
 
-    countvect, transformer, freqs = fit_transform(data, countvect, transformer)
+    countvect, transformer, freqs = tolibsvm(data, countvect, transformer)
     model.fit(freqs, labels)
     return countvect, transformer, model
 

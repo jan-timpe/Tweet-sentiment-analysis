@@ -7,6 +7,7 @@ Meant to be deployed with Apache Spark
 """
 import csv, classifier, db, spark, time, write
 import numpy as np
+import re
 
 TRAIN_FILENAME = './data/train.csv'
 TEST_FILENAME = './data/test.csv'
@@ -15,24 +16,29 @@ SPARK_PATH = './data/models/spark'
 
 if __name__ == '__main__':
     # read the training data
+    print('Extracting...')
     xtrain, ytrain = classifier.readdata(TRAIN_FILENAME)
     xtest, ytest = classifier.readdata(TEST_FILENAME)
-    countvect, transformer, model = classifier.train(xtrain, ytrain)
-    acc, model = classifier.test(model, xtest, ytest, countvect, transformer)
 
-    print('Sklearn acc: {}'.format(acc))
+    # print('Training...')
+    # countvect, transformer, model = classifier.train(xtrain, ytrain)
 
-    # print('Saving sklearn')
+    # print('Saving...')
     # classifier.save(SKLEARN_PATH, model, countvect, transformer)
-    # countvect, transformer, model = classifier.load(SKLEARN_PATH)
-    # print(classifier.predict(model, ['i like something'], countvect, transformer))
+
+    print('Loading...')
+    countvect, transformer, model = classifier.load(SKLEARN_PATH)
+
+    print('Testing...')
+    acc, model = classifier.test(model, xtest, ytest, countvect, transformer)
+    print('Test accuracy: {}'.format(acc))
 
     # start looping over tweets
-    for tweet in db.gettweets():
-        text = str(tweet['text'])
-        pred = classifier.predict(model, [text], countvect, transformer)
-        print(text, ' ^^ ', pred)
-        time.sleep(0.5) 
+    # for tweet in db.gettweets():
+    #     text = str(tweet['text'])
+    #     pred = classifier.predict(model, [text], countvect, transformer)
+    #     print(text, pred)
+    #     time.sleep(0.5)
 
     # sc = spark.context('TwitterSentimentAnalysis')
     # xdata, ydata = classifier.readdata(TRAIN_FILENAME)

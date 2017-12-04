@@ -8,6 +8,8 @@ Fill out `example_settings.py` with your own credentials and options, then renam
 
 Make sure python3 is installed
 
+Extract `data.zip` into the `data/` directory and ensure any paths referenced in `main.py` are accurate.
+
 Create a virtualenv by running
 ```$ virtualenv venv -p python3```
 

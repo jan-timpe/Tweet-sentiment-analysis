@@ -47,5 +47,5 @@ if __name__ == '__main__':
     spark.save(model, sc, SPARK_PATH)
 
     sc, model = spark.load(sc, SPARK_PATH)
-    xdata = ['boobs are good', 'beer is bad']
+    xdata = ['oh my', 'cant believe i let that in', 'oops']
     print('Prediction:', spark.predict(sc, model, xdata))

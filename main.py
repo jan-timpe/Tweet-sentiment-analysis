@@ -8,8 +8,8 @@ Meant to be deployed with Apache Spark
 import csv, classifier, db, spark, time, write
 import numpy as np
 
-TRAIN_FILENAME = './data/smtrain.csv'
-TEST_FILENAME = './data/smtest.csv'
+TRAIN_FILENAME = './data/train.csv'
+TEST_FILENAME = './data/test.csv'
 SKLEARN_PATH = './data/models/sklearn'
 SPARK_PATH = './data/models/spark'
 
@@ -22,30 +22,36 @@ if __name__ == '__main__':
 
     print('Sklearn acc: {}'.format(acc))
 
-    print('Saving sklearn')
-    classifier.save(SKLEARN_PATH, model, countvect, transformer)
-    countvect, transformer, model = classifier.load(SKLEARN_PATH)
-    print(classifier.predict(model, ['i like something'], countvect, transformer))
+    # print('Saving sklearn')
+    # classifier.save(SKLEARN_PATH, model, countvect, transformer)
+    # countvect, transformer, model = classifier.load(SKLEARN_PATH)
+    # print(classifier.predict(model, ['i like something'], countvect, transformer))
 
     # start looping over tweets
-    # for tweet in db.gettweets():
-    #     text = [tweet['text']]
-    #     prediction = clf.predict(classifier.transform(text))
-    #     print(text, ' ^^ ', prediction)
-    #     time.sleep(0.5) 
+    for tweet in db.gettweets():
+        text = str(tweet['text'])
+        pred = classifier.predict(model, [text], countvect, transformer)
+        print(text, ' ^^ ', pred)
+        time.sleep(0.5) 
 
-    sc = spark.context('TwitterSentimentAnalysis')
-    xdata, ydata = classifier.readdata(TRAIN_FILENAME)
-    proc = spark.preprocess(sc, xdata, labels=ydata)
+    # sc = spark.context('TwitterSentimentAnalysis')
+    # xdata, ydata = classifier.readdata(TRAIN_FILENAME)
+    # proc = spark.preprocess(sc, xdata, labels=ydata)
 
-    traindata, testdata = spark.traintestsplit(proc)
-    model = spark.train(traindata)
-    acc, model = spark.test(model, testdata)
-    print('Spark acc: {}'.format(acc))
+    # traindata, testdata = spark.traintestsplit(proc)
+    # model = spark.train(traindata)
+    # acc, model = spark.test(model, testdata)
+    # print('Spark acc: {}'.format(acc))
 
-    print('Saving spark')
-    spark.save(model, sc, SPARK_PATH)
+    # xdata = ['oh my', 'cant believe i let that in', 'oops']
+    # xdata = spark.pre(sc, xdata)
+    # pred = spark.predict(sc, model, xdata)
+    # print('Prediction:', pred.collect())
 
-    sc, model = spark.load(sc, SPARK_PATH)
-    xdata = ['oh my', 'cant believe i let that in', 'oops']
-    print('Prediction:', spark.predict(sc, model, xdata))
+    # print('Saving spark')
+    # spark.save(model, sc, SPARK_PATH)
+
+    # sc, model = spark.load(sc, SPARK_PATH)
+    # xdata = ['oh my', 'cant believe i let that in', 'oops']
+    # xdata = spark.preprocess(sc, xdata)
+    # print('Prediction:', spark.predict(sc, model, xdata))

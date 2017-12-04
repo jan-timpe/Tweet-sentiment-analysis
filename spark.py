@@ -10,12 +10,20 @@ def preprocess(sc, data, labels=None):
     points = []
     for i in range(len(data)):
         wordarr = data[i]
-        label = 0
+        label = 0.0
         if labels:
             label = labels[i]
         point = LabeledPoint(label, wordarr)
         points.append(point)
  
+    rdd = sc.parallelize(points)
+    return rdd
+
+def pre(sc, data):
+    data = classifier.tolibsvm(data)
+    points = []
+    for i in range(len(data)):
+        points.append(LabeledPoint(0.0, data[i]))
     rdd = sc.parallelize(points)
     return rdd
 
@@ -44,7 +52,4 @@ def load(sc, filename):
     return sc, model
 
 def predict(sc, model, data):
-    data = preprocess(sc, data)
-    pred = data.map(lambda p: model.predict(p.features))
-
-    pred.show()
+    return data.map(lambda p: model.predict(p.features))

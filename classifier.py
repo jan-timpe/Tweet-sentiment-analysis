@@ -27,10 +27,9 @@ def preprocess_text(data):
         # gets rid of all urls
         # how does it work? god only knows...
         d = re.sub(r'''(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))''', '', d)
-        
+    
         words = word_tokenize(d)
-        
-        proc.append(' '.join(filtered_words))
+        proc.append(' '.join(words))
     
     return proc
 
@@ -52,10 +51,7 @@ def transform(data, countvect, transformer):
 
 def train(data, labels):
     model = MultinomialNB()
-    countvect = CountVectorizer()
-    transformer = TfidfTransformer()
-
-    countvect, transformer, freqs = tolibsvm(data, countvect, transformer)
+    countvect, transformer, freqs = tolibsvm(data)
     model.fit(freqs, labels)
     return countvect, transformer, model
 

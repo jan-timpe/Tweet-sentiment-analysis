@@ -12,12 +12,15 @@ from settings import SKLEARN_PATH, SPARK_APPNAME, SPARK_PATH, TEST_FILENAME, TRA
 def die_with_usage_help():
     helptext = """USAGE
  $ python main.py -{o}{o} --{option}
- + -d, --destroy    Delete all data
- + -h, --help       Bring up this prompt
- + -r, --refresh    Delete and reparse all data
- + -s, --summary    How much shit is in the database? Find out.
- + -o, --output     Dump the db into data/datasets/outputs
- + -b, --bucketize  Dump the db AND the buckets into data/datasets/outputs"""
+  + -h, --help      Show this dialogue
+  + -l, --load      Load saved models   [specify -p or -k]
+  + -r, --run       Run the predictor   [specify -p or -k]
+  + -s, --save      Save models         [specify -p or -k]
+  + -p, --spark     Specify spark
+  + -k, --sklearn   Specify sklearn
+  + -t, --test      Test the models     [specify -p or -k]
+  + -n, --train     Train the models    [specify -p or -k]
+    """
     print(helptext)
     sys.exit(2)
 

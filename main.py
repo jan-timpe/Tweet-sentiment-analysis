@@ -7,7 +7,8 @@ Meant to be deployed with Apache Spark
 """
 import csv, classifier, db, getopt, re, spark, sys, time, write
 import numpy as np
-from settings import SKLEARN_PATH, SPARK_APPNAME, SPARK_PATH, TEST_FILENAME, TRAIN_FILENAME
+from settings import SKLEARN_PATH, SPARK_APPNAME, SPARK_PATH, TERMS, TEST_FILENAME, TRAIN_FILENAME
+from tweetstream.collect import stream
 
 def die_with_usage_help():
     helptext = """USAGE
@@ -26,17 +27,11 @@ def die_with_usage_help():
 
 def _loadtraindata(path=TRAIN_FILENAME):
     data, labels = classifier.readdata(path)
-    return {
-        'data': data,
-        'labels': labels
-    }
+    return data, labels
 
 def _loadtestdata(path=TEST_FILENAME):
     data, labels = classifier.readdata(path)
-    return {
-        'data': data, 
-        'labels': labels
-    }
+    return data,  labels
 
 def _loadspark(appname=SPARK_APPNAME, path=SPARK_PATH):
     sc = spark.context(appname)
@@ -77,33 +72,34 @@ def _runsklearn(model, countvect, transformer):
     pos = 0
     neg = 0
     num = 0
-    for tweet in db.gettweets():
-        text = str(tweet['text'])
-        pred = classifier.predict(model, [text], countvect, transformer)
+    totconf = 0
+    for tweet in stream(TERMS):
+        if num > 1000:
+            break
 
-        ispos = pred[0][0] == 0 # yeah it's flipped. of course it's flipped.
-        conf = pred[0][1][0] if ispos else pred[0][1][1]
+        text = str(tweet['text'])
+        pred = classifier.predict(model, [text], countvect, transformer)[0]
+
+        posval = 0 # this motherfucker gets confusing
+        negval = 1
+        ispos = pred[0] == posval
+        conf = pred[1][posval] if ispos else pred[1][negval]
 
         if conf > 0.6:
             pos += 1 if ispos else 0
             num += 1
+            totconf += conf
 
             if num % 10 == 0:
-                print('{} tweets: [ {}+, {}- ]'.format(
-                    num, 
-                    pos, 
-                    num-pos
-                ))
-                print('last: [ {} ] [ {}, {}% ]'.format(
-                    text, 
-                    'positive' if ispos else 'negative', 
-                    int(conf*100)
-                ))
+                print('{} tweets: [ {}+, {}- ]'.format(num, pos, num-pos))
+                print('last: [ {} ] [ {}, {}% ]'.format(text, 'positive' if ispos else 'negative', int(conf*100)))
 
     print('Done!')
     print(num, 'tweets processed')
     print(pos, 'with positive sentiment')
     print(num-pos, 'with negative')
+    print((num-pos)*100/num, '% negative')
+    print('Avg confidence:', (100*totconf)/num)
 
 def readargs(argv):
     try:
@@ -128,6 +124,8 @@ def readargs(argv):
     for opt, arg in opts:
         if opt in ('-h', '--help'):
             die_with_usage_help()
+        if opt in ('-l', '--load'):
+            runopts['load'] = True
         elif opt in ('-r', '--run'):
             runopts['run'] = True
         elif opt in ('-s', '--save'):
@@ -145,104 +143,98 @@ def readargs(argv):
 
 if __name__ == '__main__':
     
+    # print(classifier.preprocess_text(['suck mah tay tays', 'th1s @is #fucking http://DEd.net']))
+
     opts = readargs(sys.argv[1:])
 
-    run = {
-        'data': {
-            'train': None,
-            'test':  None
-        },
-        'sklearn': None,
-        'spark': None
-    }
+    sklearnclf = None
+    sparkclf = None
 
     if opts['load'] and opts['sklearn']:
         print('Loading sklearn')
-        run['sklearn'] = _loadsklearn()
+        sklearnclf = _loadsklearn()
 
     if opts['load'] and opts['spark']:
         print('Loading spark')
-        run['spark'] = _loadspark()
+        sparkclf = _loadspark()
 
 
 
     if opts['train']:
         print('Loading training data')
-        run['data']['train'] = _loadtraindata()
+        data, labels = _loadtraindata()
+
+        print('Preprocessing raw text')
+        data = classifier.preprocess_text(data)
 
         if opts['sklearn']:
             print('Training sklearn')
-            data = classifier.preprocess_text(run['data']['train']['data'])
-            run['sklearn'] = _trainsklearn(
-                data=data,
-                labels=run['data']['train']['labels']
-            )
+            sklearnclf = _trainsklearn(data=data, labels=labels)
 
         if opts['spark']:
             print('Training spark')
-            run['spark'] = _trainspark(
-                data=run['data']['train']['data'],
-                labels=run['data']['train']['labels']
-            )
-
+            sparkclf = _trainspark(data=data, labels=labels)
 
 
     if opts['test']:
         print('Loading testing data')
-        run['data']['test'] = _loadtestdata()
+        data, labels = _loadtestdata()
 
-        if opts['sklearn']:
+        print('Preprocessing raw text')
+        data = classifier.preprocess_text(data)
+
+        if opts['sklearn'] and sklearnclf:
             print('Testing sklearn')
-            data = classifier.preprocess_text(run['data']['test']['data'])
+            
             acc, model = classifier.test(
-                run['sklearn']['model'], 
+                sklearnclf['model'],
                 data,
-                run['data']['train']['labels'], 
-                run['sklearn']['countvect'], 
-                run['sklearn']['transformer']
+                labels,
+                sklearnclf['countvect'],
+                sklearnclf['transformer']
             )
             print('Accuracy: ', acc)
 
-        if opts['spark']:
+        if opts['spark'] and sparkclf:
             print('Testing spark')
             data = spark.preprocess(
-                run['spark']['context'], 
-                run['data']['test']['data'], 
-                labels=run['data']['test']['lables']
+                sparkclf['context'],
+                data,
+                labels=labels
             )
             acc, model = spark.test(
-                run['spark']['model'], 
+                sparkclf['model'], 
                 data
             )
             print('Accuracy: ', acc)
 
 
 
-    if opts['save'] and opts['sklearn']:
+    if opts['save'] and opts['sklearn'] and sklearnclf:
         print('Saving sklearn')
         classifier.save(
-            SKLEARN_PATH, 
-            run['sklearn']['model'], 
-            run['sklearn']['countvect'], 
-            run['sklearn']['transformer']
+            SKLEARN_PATH,
+            sklearnclf['model'],
+            sklearnclf['countvect'],
+            sklearnclf['transformer']
         )
 
-    if opts['save'] and opts['spark']:
+    if opts['save'] and opts['spark'] and sparkclf:
         print('Saving spark')
         spark.save(
-            run['spark']['model'], 
-            run['spark']['context'],  
+            sparkclf['model'],
+            sparkclf['context'],
             SPARK_PATH
         )
 
-    if opts['run'] and opts['sklearn']:
+    if opts['run'] and opts['sklearn'] and sklearnclf:
         print('Running sklearn')
         _runsklearn(
-            run['sklearn']['model'], 
-            run['sklearn']['countvect'], 
-            run['sklearn']['transformer']
+            sklearnclf['model'],
+            sklearnclf['countvect'],
+            sklearnclf['transformer']
         )
 
-    if opts['run'] and opts['spark']:
+    if opts['run'] and opts['spark'] and sparkclf:
         print('Running spark')
         ha = 'haha'

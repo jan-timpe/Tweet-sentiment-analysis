@@ -22,19 +22,18 @@ def readdata(filename):
 def preprocess_text(data):
     proc = []
     for d in data:
-        d = d.lower()
         # yeah this is real sexy
         # gets rid of all urls
         # how does it work? god only knows...
         d = re.sub(r'''(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))''', '', d)
-    
-        words = word_tokenize(d)
-        proc.append(' '.join(words))
-    
+
+        d = d.strip()
+        d = re.sub(r'#|\bRT\b', '', d)
+        d = re.sub(r'@(\S+)', '', d)
+        proc.append(d)
     return proc
 
 def tolibsvm(data, countvect=CountVectorizer(), transformer=TfidfTransformer(), array=False):
-    # data = preprocess_text(data)
     counts = countvect.fit_transform(np.array(data))
     freqs = transformer.fit_transform(counts)
 
@@ -44,7 +43,6 @@ def tolibsvm(data, countvect=CountVectorizer(), transformer=TfidfTransformer(), 
     return countvect, transformer, freqs
 
 def transform(data, countvect, transformer):
-    # data = preprocess_text(data)
     counts = countvect.transform(np.array(data))
     freqs = transformer.transform(counts)
     return countvect, transformer, freqs

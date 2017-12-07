@@ -22,19 +22,20 @@ def readdata(filename):
 def preprocess_text(data):
     proc = []
     for d in data:
+        d = d.lower()
         # yeah this is real sexy
         # gets rid of all urls
         # how does it work? god only knows...
         d = re.sub(r'''(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))''', '', d)
         
         words = word_tokenize(d)
-        filtered_words = [w for w in words if w not in stopwords.words('english')]
+        
         proc.append(' '.join(filtered_words))
     
     return proc
 
 def tolibsvm(data, countvect=CountVectorizer(), transformer=TfidfTransformer(), array=False):
-    data = preprocess_text(data)
+    # data = preprocess_text(data)
     counts = countvect.fit_transform(np.array(data))
     freqs = transformer.fit_transform(counts)
 
@@ -44,7 +45,7 @@ def tolibsvm(data, countvect=CountVectorizer(), transformer=TfidfTransformer(), 
     return countvect, transformer, freqs
 
 def transform(data, countvect, transformer):
-    data = preprocess_text(data)
+    # data = preprocess_text(data)
     counts = countvect.transform(np.array(data))
     freqs = transformer.transform(counts)
     return countvect, transformer, freqs
@@ -71,7 +72,10 @@ def test(model, data, labels, countvect, transformer):
 def predict(model, textarr, countvect, transformer):
     countvect, transformer, freqs = transform(textarr, countvect, transformer)
     pred = model.predict(freqs)
-    return pred
+    conf = model.predict_proba(freqs)
+    
+    result = [(pred[i], conf[i]) for i in range(len(pred))]
+    return result
 
 def save(path, model, countvect, transformer):
     modelpath = str(path) + '/model.pkl'

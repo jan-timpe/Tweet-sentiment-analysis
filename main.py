@@ -68,38 +68,9 @@ def _trainspark(data, labels, appname=SPARK_APPNAME):
 
 def _runsklearn(model, countvect, transformer):
     # start looping over tweets
-    print('Starting...')
-    pos = 0
-    neg = 0
-    num = 0
-    totconf = 0
-    for tweet in stream(TERMS):
-        if num > 1000:
-            break
-
-        text = str(tweet['text'])
-        pred = classifier.predict(model, [text], countvect, transformer)[0]
-
-        posval = 0 # this motherfucker gets confusing
-        negval = 1
-        ispos = pred[0] == posval
-        conf = pred[1][posval] if ispos else pred[1][negval]
-
-        if conf > 0.6:
-            pos += 1 if ispos else 0
-            num += 1
-            totconf += conf
-
-            if num % 10 == 0:
-                print('{} tweets: [ {}+, {}- ]'.format(num, pos, num-pos))
-                print('last: [ {} ] [ {}, {}% ]'.format(text, 'positive' if ispos else 'negative', int(conf*100)))
-
-    print('Done!')
-    print(num, 'tweets processed')
-    print(pos, 'with positive sentiment')
-    print(num-pos, 'with negative')
-    print((num-pos)*100/num, '% negative')
-    print('Avg confidence:', (100*totconf)/num)
+    print('Starting')
+    client = stream(TERMS, model, countvect, transformer)
+    print('done')
 
 def readargs(argv):
     try:

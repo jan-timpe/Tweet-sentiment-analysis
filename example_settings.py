@@ -16,7 +16,7 @@ SPARK_APPNAME = 'TwitterSentimentAnalysis'
 
 NUM_THREADS = 4
 MAX_TWEETS = 100
-STATUS_THRESHOLD = 1
+STATUS_THRESHOLD = 10
 TERMS =[
     'soccer'
 ]

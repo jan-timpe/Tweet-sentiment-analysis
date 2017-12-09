@@ -1,6 +1,6 @@
 import csv, pickle
-from nltk import word_tokenize
-from nltk.corpus import stopwords
+# from nltk import word_tokenize
+# from nltk.corpus import stopwords
 import numpy as np
 import re
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer

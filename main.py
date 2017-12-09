@@ -5,8 +5,9 @@ Jan Timpe | jantimpe@uark.edu
 Collects tweets, uses machine learning to predict sentament
 Meant to be deployed with Apache Spark
 """
-import csv, classifier, db, getopt, re, spark, sys, time, write
+import csv, classifier, db, getopt, re, sys, time, write
 import numpy as np
+# import spark
 from settings import SKLEARN_PATH, SPARK_APPNAME, SPARK_PATH, TERMS, TEST_FILENAME, TRAIN_FILENAME
 from tweetstream.collect import stream
 
@@ -33,13 +34,13 @@ def _loadtestdata(path=TEST_FILENAME):
     data, labels = classifier.readdata(path)
     return data,  labels
 
-def _loadspark(appname=SPARK_APPNAME, path=SPARK_PATH):
-    sc = spark.context(appname)
-    sc, model = spark.load(sc, path)
-    return {
-        'context': sc,
-        'model': model
-    }
+# def _loadspark(appname=SPARK_APPNAME, path=SPARK_PATH):
+#     sc = spark.context(appname)
+#     sc, model = spark.load(sc, path)
+#     return {
+#         'context': sc,
+#         'model': model
+#     }
 
 def _loadsklearn():
     countvect, transformer, model = classifier.load(SKLEARN_PATH)
@@ -57,14 +58,14 @@ def _trainsklearn(data, labels):
         'transformer': transformer
     }
 
-def _trainspark(data, labels, appname=SPARK_APPNAME):
-    sc = spark.context(appname)
-    proc = spark.preprocess(sc, data, labels=labels)
-    model = spark.train(proc)
-    return {
-        'context': sc,
-        'model': model
-    }
+# def _trainspark(data, labels, appname=SPARK_APPNAME):
+#     sc = spark.context(appname)
+#     proc = spark.preprocess(sc, data, labels=labels)
+#     model = spark.train(proc)
+#     return {
+#         'context': sc,
+#         'model': model
+#     }
 
 def _runsklearn(model, countvect, transformer):
     # start looping over tweets
@@ -125,9 +126,9 @@ if __name__ == '__main__':
         print('Loading sklearn')
         sklearnclf = _loadsklearn()
 
-    if opts['load'] and opts['spark']:
-        print('Loading spark')
-        sparkclf = _loadspark()
+    # if opts['load'] and opts['spark']:
+    #     print('Loading spark')
+    #     sparkclf = _loadspark()
 
 
 
@@ -142,9 +143,9 @@ if __name__ == '__main__':
             print('Training sklearn')
             sklearnclf = _trainsklearn(data=data, labels=labels)
 
-        if opts['spark']:
-            print('Training spark')
-            sparkclf = _trainspark(data=data, labels=labels)
+        # if opts['spark']:
+        #     print('Training spark')
+        #     sparkclf = _trainspark(data=data, labels=labels)
 
 
     if opts['test']:
@@ -166,18 +167,18 @@ if __name__ == '__main__':
             )
             print('Accuracy: ', acc)
 
-        if opts['spark'] and sparkclf:
-            print('Testing spark')
-            data = spark.preprocess(
-                sparkclf['context'],
-                data,
-                labels=labels
-            )
-            acc, model = spark.test(
-                sparkclf['model'], 
-                data
-            )
-            print('Accuracy: ', acc)
+        # if opts['spark'] and sparkclf:
+        #     print('Testing spark')
+        #     data = spark.preprocess(
+        #         sparkclf['context'],
+        #         data,
+        #         labels=labels
+        #     )
+        #     acc, model = spark.test(
+        #         sparkclf['model'], 
+        #         data
+        #     )
+        #     print('Accuracy: ', acc)
 
 
 
@@ -190,13 +191,13 @@ if __name__ == '__main__':
             sklearnclf['transformer']
         )
 
-    if opts['save'] and opts['spark'] and sparkclf:
-        print('Saving spark')
-        spark.save(
-            sparkclf['model'],
-            sparkclf['context'],
-            SPARK_PATH
-        )
+    # if opts['save'] and opts['spark'] and sparkclf:
+    #     print('Saving spark')
+    #     spark.save(
+    #         sparkclf['model'],
+    #         sparkclf['context'],
+    #         SPARK_PATH
+    #     )
 
     if opts['run'] and opts['sklearn'] and sklearnclf:
         print('Running sklearn')
@@ -206,6 +207,6 @@ if __name__ == '__main__':
             sklearnclf['transformer']
         )
 
-    if opts['run'] and opts['spark'] and sparkclf:
-        print('Running spark')
-        ha = 'haha'
+    # if opts['run'] and opts['spark'] and sparkclf:
+    #     print('Running spark')
+    #     ha = 'haha'
